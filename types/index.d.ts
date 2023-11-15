@@ -1,6 +1,7 @@
 // Type definitions for @gsap/react
 // https://gsap.com
 // Definitions by: Jack Doyle <https://github.com/jackdoyle>
+// Definitions: https://github.com/greensock/react
 
 /// <reference path="../node_modules/gsap/types/index.d.ts"/>
 

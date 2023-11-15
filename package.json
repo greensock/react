@@ -35,9 +35,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/greensock/react"
+    "url": "git+https://github.com/greensock/react.git"
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "homepage": "https://github.com/greensock/react#readme"
 }
