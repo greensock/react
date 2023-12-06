@@ -10,7 +10,7 @@ A drop-in replacement for <a href="https://react.dev/reference/react/useEffect">
 
 ### ❌ OLD
 ```javascript
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 
 // for server-side rendering apps, useEffect() must be used instead of useLayoutEffect()
@@ -26,76 +26,90 @@ useIsomorphicLayoutEffect(() => {
 
 ### ✅ NEW
 ```javascript 
+import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
 const container = useRef();
 useGSAP(() => {
     // gsap code here...
-}, [], container); // <-- scope for selector text (optional)
+}, { scope: container }); // <-- scope is for selector text (optional)
 ```
 
-### Benefits
+### ...or with a dependency Array and scope:
+
+```javascript
+useGSAP(() => {
+    // gsap code here...
+}, { dependencies: [endX], scope: container}); // config object offers maximum flexibility
+```
+
+If you prefer the method signature of `useEffect()` and you don't need to define a scope, this works too but the `config` object syntax is preferred because it offers more flexibility and readability:
+
+```javascript
+useGSAP(() => {
+    // gsap code here...
+}, [endX]); // works, but less flexible than the config object
+```
+
+So you can use **any** of these method signatures: 
+```javascript
+// config object for defining things like scope, dependencies, and revertOnUpdate (most flexible)
+useGSAP(func, config);
+// exactly like useEffect()
+useGSAP(func);
+useGSAP(func, dependencies);
+// primarily for event handlers and other external uses (read about contextSafe() below)
+const { context, contextSafe } = useGSAP(config);
+```
+
+If you define `dependencies`, the GSAP-related objects (animations, ScrollTriggers, etc.) will only get reverted when the entire component gets re-rendered but if you want them to get reverted **every time the hook updates** (when any dependency changes), you can set `revertOnUpdate: true` in the `config` object.
+
+```javascript
+useGSAP(() => {
+    // gsap code here...
+}, { dependencies: [endX], scope: container, revertOnUpdate: true });
+```
+
+## Benefits
 - Automatically handles cleanup using <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a>
 - Implements `useIsomorphicLayoutEffect()` technique, preferring React's `useLayoutEffect()` but falling back to `useEffect()` if `window` isn't defined, making it safe to use in server-side rendering environments.
 - Optionally define a `scope` for selector text, making it safer/easier to write code that doesn't require you to create a useRef() for each and every element you want to animate.
 - Defaults to using an empty dependency Array in its simplest form, like `useGSAP(() => {...})` It was common for developers to forget to include that on React's `useLayoutEffect(() => {...}, [])` which resulted in the code being executed on every component render.
-- Exposes convenient references to the `context` instance and the `contextSafe()` function as method parameters as well as object properties that get returned by the `useGSAP()` hook. 
+- Exposes convenient references to the `context` instance and the `contextSafe()` function as method parameters as well as object properties that get returned by the `useGSAP()` hook, so it's easier to set up standard React event handlers. 
 
+## Install
 
-### Install
 ```bash
 npm install @gsap/react
 ```
 
-### Using callbacks or event listeners? Use `contextSafe()` and clean up!
+## Using callbacks or event listeners? Use `contextSafe()` and clean up!
 
-All GSAP animations, ScrollTriggers, Draggables, and SplitText instances that are created while the `useGSAP()` function executes will automatically get recorded and cleaned up because they're in the <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a> that's created internally, and any selector text will use the same `scope` as was defined for that context (if any). **HOWEVER**, if you set up callbacks or event listeners or other code that gets called *LATER* (after the `useGSAP()` function finishes executing), **those won't get added to the context** for automatic cleanup unless you wrap them in the `contextSafe()` function. Anything inside the contextSafe() function will also use the same `scope` for selector text (see below). Don't forget to return a cleanup function where you remove your event listeners. There are two ways to access the `contextSafe()` function: 
+A function is considered "context-safe" if it is properly scoped to a <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a> so that any GSAP animations, ScrollTriggers, Draggables, Observers, and SplitText instances that are created **while that function executes** are recorded by that `Context` and use its selector text `scope`. When that `Context` gets reverted, so do all of those instances. Cleanup is important in React and `Context` makes it simple. Otherwise, you'd need to manually keep track of all your animations and revert them when necessary, like when the entire component gets re-rendered. `Context` does that work for you.
 
-#### 1) Using the 2nd parameter (for inside `useGSAP()` function)
+The main `useGSAP(() => {...})` function is automatically context-safe of course. But if you're creating functions that get called **AFTER** the main `useGSAP()` function executes (like click event handlers, something in a `setTimeout()`, or anything delayed), you need a way to make those functions context-safe. Think of it like telling the `Context` when to hit the "record" button for any GSAP-related objects. 
 
-```javascript
-useGSAP((context, contextSafe) => { // <-- there it is
-	
-    // ✅ safe, created during execution
-    gsap.to(".good", {x: 100}); 
-    
-    // ❌ DANGER! This animation is created in an event handler that executes AFTER the useGSAP() executes, thus it's not added to the context so it won't get cleaned up (reverted). The event listener isn't removed in cleanup function below either, so it persists between component renders (bad).
-    badRef.current.addEventListener("click", () => {
-        gsap.to(".bad", {y: 100}); 
-    });
-	
-    // ✅ safe, wrapped in contextSafe() function and we remove the event listener in the cleanup function below. 👍
-    const onClickGood = contextSafe(() => {
-                gsap.to(".good", {rotation: 180});
-            });
-    goodRef.current.addEventListener("click", onClickGood);
-	
-    return () => { // <-- cleanup function (remove listeners here)
-        goodRef.current.removeEventListener("click", onClickGood);
-    };
-});
-```
+**Solution**: wrap those functions in the provided `contextSafe()` to associates them with the `Context`. 
 
-#### 2) Using the returned object property (for outside `useGSAP()` function)
+If you're manually adding event listeners (uncommon in React), don't forget to return a cleanup function where you remove your event listeners (see the 2nd example below). There are two ways to access the `contextSafe()` function: 
+
+#### 1) Using the returned object property (for outside `useGSAP()` function)
 
 ```JSX
 const container = useRef();
 
-const { contextSafe } = useGSAP(() => {
-        // ✅ any GSAP stuff created during execution here is safe (gets cleaned up)
-        gsap.to(".good", {x: 100});
-    }, [], container);
+const { contextSafe } = useGSAP({scope: container}); // we can just pass in a config object as the 1st parameter to make scoping simple
 
 // ❌ DANGER! Not wrapped in contextSafe() so GSAP-related objects created inside this function won't be bound to the context for automatic cleanup when it's reverted. Selector text isn't scoped to the container either.
 const onClickBad = () => {
-        gsap.to(".bad", {y: 100});
-    };
+          gsap.to(".bad", {y: 100});
+      };
 
 // ✅ wrapped in contextSafe() so GSAP-related objects here will be bound to the context and automatically cleaned up when the context gets reverted, plus selector text is scoped properly to the container.
 const onClickGood = contextSafe(() => {
-        gsap.to(".good", {rotation: 180});
-    });
+          gsap.to(".good", {rotation: 180});
+      });
 
 return (
     <div ref={container}>
@@ -105,11 +119,48 @@ return (
 );
 ```
 
-### Scoped selector text
+### 2) Using the 2nd argument (for inside `useGSAP()` function)
 
-You can optionally pass in a <a href="https://react.dev/reference/react/useRef">React Ref</a> as the `scope` (3rd parameter) and then all the selector text in the `useGSAP()` function will be scoped to that particular Ref, meaning selector text will be limited to **descendants** of that element. This can greatly simplify your code. No more creating a Ref for every element you want to animate!
+```JSX
+const container = useRef();
+const badRef = useRef();
+const goodRef = useRef();
 
-#### Example using Refs (tedious) 😩
+useGSAP((context, contextSafe) => { // <-- there it is
+	
+    // ✅ safe, created during execution
+    gsap.to(goodRef.current, {x: 100}); 
+    
+    // ❌ DANGER! This animation is created in an event handler that executes AFTER the useGSAP() executes, thus it's not added to the context so it won't get cleaned up (reverted). The event listener isn't removed in cleanup function below either, so it persists between component renders (bad).
+    badRef.current.addEventListener("click", () => {
+        gsap.to(badRef.current, {y: 100}); 
+    });
+	
+    // ✅ safe, wrapped in contextSafe() function and we remove the event listener in the cleanup function below. 👍
+    const onClickGood = contextSafe(() => {
+                gsap.to(goodRef.current, {rotation: 180});
+            });
+    goodRef.current.addEventListener("click", onClickGood);
+	
+    return () => { // <-- cleanup (remove listeners here)
+        goodRef.current.removeEventListener("click", onClickGood);
+    };
+}, {scope: container});
+return (
+	<div ref={container}>
+		<button ref={badRef}></button>
+		<button ref={goodRef}></button>
+	</div>
+);
+```
+
+
+
+## `scope` for selector text
+
+You can optionally define a `scope` in the `config` object as a <a href="https://react.dev/reference/react/useRef">React Ref</a> and then any selector text in the `useGSAP()` <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`Context`</a> will be scoped to that particular Ref, meaning it will be limited to finding **descendants** of that element. This can greatly simplify your code. No more creating a Ref for every element you want to animate! And you don't need to worry about selecting elements outside your component instance.
+
+### Example using Refs (tedious) 😩
 ```JSX
 const container = useRef();
 const box1 = useRef(); // ugh, so many refs!
@@ -129,14 +180,14 @@ return (
 );
 ```
 
-#### Example using scoped selector text (simple) 🙂
+### Example using scoped selector text (simple) 🙂
 ```JSX
 // we only need one ref, the container. Use selector text for the rest (scoped to only find descendants of container).
 const container = useRef();
 
 useGSAP(() => {
     gsap.from(".box", {opacity: 0, stagger: 0.1});
-}, [], container); // <-- scope, 3rd parameter
+}, { scope: container }); // <-- magic
 
 return (
     <div ref={container}>
@@ -151,7 +202,7 @@ return (
 <a href="https://stackblitz.com/@GreenSockLearning/collections/gsap-react-starters">https://stackblitz.com/@GreenSockLearning/collections/gsap-react-starters</a>
 
 
-### Need help?
+## Need help?
 Ask in the friendly <a href="https://gsap.com/community/">GSAP forums</a>. Or share your knowledge and help someone else - it's a great way to sharpen your skills! Report any bugs there too (or <a href="https://github.com/greensock/GSAP/issues">file an issue here</a> if you prefer).
 
 ### License

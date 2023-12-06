@@ -18,11 +18,16 @@ interface useGSAPReturn {
   contextSafe: ContextSafeFunc;
 }
 
+interface useGSAPConfig {
+  scope?: ReactRef | Element | string;
+  dependencies?: unknown[];
+  revertOnUpdate?: boolean;
+}
+
 /**
  * Drop-in replacement for React's useLayoutEffect(); falls back to useEffect() if "window" is not defined (for SSR environments). Handles cleanup of GSAP objects that were created during execution of the supplied function.
- * @param {ContextFunc | ReactRef} [func]
- * @param {Array} [dependencies]
- * @param {Element | string | object} [scope]
+ * @param {ContextFunc | useGSAPConfig} func
+ * @param {Array | useGSAPConfig} [dependencies]
  * @returns {useGSAPReturn} Object with "context" and "contextSafe" properties
 */
-export function useGSAP(func?: ContextFunc | ReactRef, dependencies?: unknown[], scope?: ReactRef | Element | string): useGSAPReturn;
+export function useGSAP(func?: ContextFunc | useGSAPConfig, dependencies?: unknown[] | useGSAPConfig): useGSAPReturn;
