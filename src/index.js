@@ -26,7 +26,7 @@ export const useGSAP = (callback, dependencies = emptyArray) => {
     config = dependencies;
     dependencies = "dependencies" in config ? config.dependencies : emptyArray;
   }
-  let { scope, revertOnUpdate } = config;
+  let { scope, revertOnUpdate } = config, mounted;
   (callback && typeof callback !== "function") && console.warn("First parameter must be a function or config object");
   const context = gsap.context(() => { }, scope),
         contextSafe = (func) => context.add(null, func),
@@ -34,10 +34,13 @@ export const useGSAP = (callback, dependencies = emptyArray) => {
         deferCleanup = dependencies && dependencies.length && !revertOnUpdate;
   useIsomorphicLayoutEffect(() => {
     callback && context.add(callback, scope);
-    if (!deferCleanup) {
+    if (!deferCleanup || !mounted) { // React renders bottom-up, thus there could be hooks with dependencies that run BEFORE the component mounts, thus cleanup wouldn't occur since a hook with an empty dependency Array would only run once the component mounts.
       return cleanup;
     }
   }, dependencies);
-  deferCleanup && useIsomorphicLayoutEffect(() => cleanup, emptyArray);
+  deferCleanup && useIsomorphicLayoutEffect(() => {
+      mounted = true;
+      return cleanup;
+    }, emptyArray);
   return { context, contextSafe };
 };

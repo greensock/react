@@ -1,8 +1,8 @@
 {
   "name": "@gsap/react",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Tools for using GSAP in React, like useGSAP() which is a drop-in replacement for useLayoutEffect()/useEffect()",
-  "main": "./src/index.js",
+  "main": "./dist/index.js",
   "module": "./src/index.js",
   "types": "./types/index.d.ts",
   "keywords": [
@@ -18,6 +18,7 @@
   "files": [
     "src",
     "types",
+    "dist",
     "README.md"
   ],
   "author": "Jack Doyle (jack@greensock.com)",

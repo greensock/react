@@ -2,13 +2,13 @@
 
 [![Using GSAP in React](https://gsap.com/_img/github/gsap-react-main.png)](https://gsap.com/resources/React)
 
-<a href="https://gsap.com">GSAP</a> itself is **completely framework-agnostic** so you can use it anywhere (vanilla JS, Vue, Angular, React, etc.) without any special wrappers or dependencies, but we created this package to solve a few **React-specific** friction points.
+<a href="https://gsap.com">GSAP</a> itself is **completely framework-agnostic** and can be used in any JS framework without any special wrappers or dependencies. This hook solves a few **React-specific** friction points so that you can just focus on the fun stuff. 🤘🏻
 
 ## `useGSAP()`
 
 A drop-in replacement for <a href="https://react.dev/reference/react/useEffect">`useEffect()`</a> or <a href="https://react.dev/reference/react/useLayoutEffect">`useLayoutEffect()`</a> that automatically handles cleanup using <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a>
 
-### ❌ OLD
+### ❌ OLD (without useGSAP() hook)
 ```javascript
 import { useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
@@ -63,7 +63,7 @@ useGSAP(func, dependencies);
 const { context, contextSafe } = useGSAP(config);
 ```
 
-If you define `dependencies`, the GSAP-related objects (animations, ScrollTriggers, etc.) will only get reverted when the entire component gets re-rendered but if you want them to get reverted **every time the hook updates** (when any dependency changes), you can set `revertOnUpdate: true` in the `config` object.
+If you define `dependencies`, the GSAP-related objects (animations, ScrollTriggers, etc.) will only get reverted when the hook gets torn down but if you want them to get reverted **every time the hook updates** (when any dependency changes), you can set `revertOnUpdate: true` in the `config` object.
 
 ```javascript
 useGSAP(() => {
@@ -74,8 +74,8 @@ useGSAP(() => {
 ## Benefits
 - Automatically handles cleanup using <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a>
 - Implements `useIsomorphicLayoutEffect()` technique, preferring React's `useLayoutEffect()` but falling back to `useEffect()` if `window` isn't defined, making it safe to use in server-side rendering environments.
-- Optionally define a `scope` for selector text, making it safer/easier to write code that doesn't require you to create a useRef() for each and every element you want to animate.
-- Defaults to using an empty dependency Array in its simplest form, like `useGSAP(() => {...})` It was common for developers to forget to include that on React's `useLayoutEffect(() => {...}, [])` which resulted in the code being executed on every component render.
+- You may optionally define a `scope` for selector text, making it safer/easier to write code that doesn't require you to create a `useRef()` for each and every element you want to animate.
+- Defaults to using an empty dependency Array in its simplest form, like `useGSAP(() => {...})` because so many developers forget to include that empty dependency Array on React's `useLayoutEffect(() => {...}, [])` which resulted in the code being executed on every component render.
 - Exposes convenient references to the `context` instance and the `contextSafe()` function as method parameters as well as object properties that get returned by the `useGSAP()` hook, so it's easier to set up standard React event handlers. 
 
 ## Install
@@ -86,13 +86,13 @@ npm install @gsap/react
 
 ## Using callbacks or event listeners? Use `contextSafe()` and clean up!
 
-A function is considered "context-safe" if it is properly scoped to a <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a> so that any GSAP animations, ScrollTriggers, Draggables, Observers, and SplitText instances that are created **while that function executes** are recorded by that `Context` and use its selector text `scope`. When that `Context` gets reverted, so do all of those instances. Cleanup is important in React and `Context` makes it simple. Otherwise, you'd need to manually keep track of all your animations and revert them when necessary, like when the entire component gets re-rendered. `Context` does that work for you.
+A function is considered "context-safe" if it is properly scoped to a <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a> so that any GSAP-related objects created **while that function executes** are recorded by that `Context` and use its `scope` for selector text. When that `Context` gets reverted (like when the hook gets torn down or re-synchronizes), so do all of those GSAP-related objects. Cleanup is important in React and `Context` makes it simple. Otherwise, you'd need to manually keep track of all your animations and `revert()` them when necessary, like when the entire component gets unmounted/remounted. `Context` does that work for you.
 
 The main `useGSAP(() => {...})` function is automatically context-safe of course. But if you're creating functions that get called **AFTER** the main `useGSAP()` function executes (like click event handlers, something in a `setTimeout()`, or anything delayed), you need a way to make those functions context-safe. Think of it like telling the `Context` when to hit the "record" button for any GSAP-related objects. 
 
-**Solution**: wrap those functions in the provided `contextSafe()` to associates them with the `Context`. 
+**Solution**: wrap those functions in the provided `contextSafe()` to associates them with the `Context`. `contextSafe()` accepts a function and returns a new context-safe version of that function.
 
-If you're manually adding event listeners (uncommon in React), don't forget to return a cleanup function where you remove your event listeners (see the 2nd example below). There are two ways to access the `contextSafe()` function: 
+There are two ways to access the `contextSafe()` function: 
 
 #### 1) Using the returned object property (for outside `useGSAP()` function)
 
