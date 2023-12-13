@@ -1,5 +1,5 @@
 /*!
- * @gsap/react 2.0.1
+ * @gsap/react 2.0.2
  * https://gsap.com
  *
  * @license Copyright 2023, GreenSock. All rights reserved.
@@ -33,7 +33,7 @@
         scope,
         revertOnUpdate
       } = config,
-      mounted;
+      [mounted, setMounted] = react.useState(false);
     callback && typeof callback !== "function" && console.warn("First parameter must be a function or config object");
     const context = gsap.context(() => {}, scope),
       contextSafe = func => context.add(null, func),
@@ -46,7 +46,7 @@
       }
     }, dependencies);
     deferCleanup && useIsomorphicLayoutEffect(() => {
-      mounted = true;
+      setMounted(true);
       return cleanup;
     }, emptyArray);
     return {

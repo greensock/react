@@ -8,7 +8,7 @@
  * @author: Jack Doyle, jack@greensock.com
 */
 /* eslint-disable */
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import gsap from "gsap";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect,
@@ -26,7 +26,8 @@ export const useGSAP = (callback, dependencies = emptyArray) => {
     config = dependencies;
     dependencies = "dependencies" in config ? config.dependencies : emptyArray;
   }
-  let { scope, revertOnUpdate } = config, mounted;
+  let { scope, revertOnUpdate } = config,
+      [mounted, setMounted] = useState(false);
   (callback && typeof callback !== "function") && console.warn("First parameter must be a function or config object");
   const context = gsap.context(() => { }, scope),
         contextSafe = (func) => context.add(null, func),
@@ -39,7 +40,7 @@ export const useGSAP = (callback, dependencies = emptyArray) => {
     }
   }, dependencies);
   deferCleanup && useIsomorphicLayoutEffect(() => {
-      mounted = true;
+      setMounted(true);
       return cleanup;
     }, emptyArray);
   return { context, contextSafe };
