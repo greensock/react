@@ -1,12 +1,12 @@
 // Type definitions for @gsap/react
 // https://gsap.com
 // Definitions by: Jack Doyle <https://github.com/jackdoyle>
-// Copyright 2008-2023, GreenSock. All rights reserved.
+// Copyright 2008-2024, GreenSock. All rights reserved.
 // Definitions: https://github.com/greensock/react
 
-/// <reference path="../node_modules/gsap/types/index.d.ts"/>
+import gsap from "gsap";
 
-type ContextSafeFunc = (func: Function) => Function;
+type ContextSafeFunc = <T extends Function>(func: T) => T;
 type ContextFunc = (context: gsap.Context, contextSafe?: ContextSafeFunc) => Function | any | void;
 
 interface ReactRef {

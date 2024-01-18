@@ -1,8 +1,8 @@
 /*!
- * @gsap/react 2.0.2
+ * @gsap/react 2.1.0
  * https://gsap.com
  *
- * @license Copyright 2023, GreenSock. All rights reserved.
+ * @license Copyright 2024, GreenSock. All rights reserved.
  * Subject to the terms at https://gsap.com/standard-license or for Club GSAP members, the agreement issued with that membership.
  * @author: Jack Doyle, jack@greensock.com
  */
@@ -15,10 +15,11 @@
 
   gsap = gsap && Object.prototype.hasOwnProperty.call(gsap, 'default') ? gsap['default'] : gsap;
 
-  const useIsomorphicLayoutEffect = typeof window !== "undefined" ? react.useLayoutEffect : react.useEffect,
+  let useIsomorphicLayoutEffect = typeof window !== "undefined" ? react.useLayoutEffect : react.useEffect,
     isConfig = value => value && !Array.isArray(value) && typeof value === "object",
     emptyArray = [],
-    defaultConfig = {};
+    defaultConfig = {},
+    _gsap = gsap;
   const useGSAP = (callback, dependencies = emptyArray) => {
     let config = defaultConfig;
     if (isConfig(callback)) {
@@ -35,7 +36,7 @@
       } = config,
       [mounted, setMounted] = react.useState(false);
     callback && typeof callback !== "function" && console.warn("First parameter must be a function or config object");
-    const context = gsap.context(() => {}, scope),
+    const context = _gsap.context(() => {}, scope),
       contextSafe = func => context.add(null, func),
       cleanup = () => context.revert(),
       deferCleanup = dependencies && dependencies.length && !revertOnUpdate;
@@ -54,6 +55,10 @@
       contextSafe
     };
   };
+  useGSAP.register = core => {
+    _gsap = core;
+  };
+  useGSAP.headless = true;
 
   exports.useGSAP = useGSAP;
 
