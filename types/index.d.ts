@@ -6,7 +6,7 @@
 
 /// <reference path="../node_modules/gsap/types/index.d.ts"/>
 
-type ContextSafeFunc = (func: Function) => Function;
+type ContextSafeFunc = <T extends Function>(func: T) => T;
 type ContextFunc = (context: gsap.Context, contextSafe?: ContextSafeFunc) => Function | any | void;
 
 interface ReactRef {
