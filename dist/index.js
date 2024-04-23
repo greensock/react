@@ -1,5 +1,5 @@
 /*!
- * @gsap/react 2.1.0
+ * @gsap/react 2.1.1
  * https://gsap.com
  *
  * @license Copyright 2024, GreenSock. All rights reserved.
@@ -30,29 +30,28 @@
       config = dependencies;
       dependencies = "dependencies" in config ? config.dependencies : emptyArray;
     }
-    let {
+    callback && typeof callback !== "function" && console.warn("First parameter must be a function or config object");
+    const {
         scope,
         revertOnUpdate
       } = config,
-      [mounted, setMounted] = react.useState(false);
-    callback && typeof callback !== "function" && console.warn("First parameter must be a function or config object");
-    const context = _gsap.context(() => {}, scope),
-      contextSafe = func => context.add(null, func),
-      cleanup = () => context.revert(),
+      mounted = react.useRef(false),
+      context = react.useRef(_gsap.context(() => {}, scope)),
+      contextSafe = react.useRef(func => context.current.add(null, func)),
       deferCleanup = dependencies && dependencies.length && !revertOnUpdate;
     useIsomorphicLayoutEffect(() => {
-      callback && context.add(callback, scope);
-      if (!deferCleanup || !mounted) {
-        return cleanup;
+      callback && context.current.add(callback, scope);
+      if (!deferCleanup || !mounted.current) {
+        return () => context.current.revert();
       }
     }, dependencies);
     deferCleanup && useIsomorphicLayoutEffect(() => {
-      setMounted(true);
-      return cleanup;
+      mounted.current = true;
+      return () => context.current.revert();
     }, emptyArray);
     return {
-      context,
-      contextSafe
+      context: context.current,
+      contextSafe: contextSafe.current
     };
   };
   useGSAP.register = core => {

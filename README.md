@@ -199,7 +199,7 @@ return (
 ```
 
 ## Demos and starter templates
-<a href="https://stackblitz.com/@GreenSockLearning/collections/gsap-react-starters">https://stackblitz.com/@GreenSockLearning/collections/gsap-react-starters</a>
+<a href="https://stackblitz.com/@gsap-dev/collections/gsap-react-starters">https://stackblitz.com/@gsap-dev/collections/gsap-react-starters</a>
 
 
 ## Need help?
@@ -208,4 +208,4 @@ Ask in the friendly <a href="https://gsap.com/community/">GSAP forums</a>. Or sh
 ### License
 GreenSock's standard "no charge" license can be viewed at <a href="https://gsap.com/standard-license">https://gsap.com/standard-license</a>. <a href="https://gsap.com/pricing/">Club GSAP</a> members are granted additional rights. See <a href="https://gsap.com/licensing/">https://gsap.com/licensing/</a> for details. Why doesn't GSAP use an MIT (or similar) open source license, and why is that a **good** thing? This article explains it all: <a href="https://gsap.com/why-license/" target="_blank">https://gsap.com/why-license/</a>
 
-Copyright (c) 2008-2023, GreenSock. All rights reserved. 
+Copyright (c) 2008-2024, GreenSock. All rights reserved. 

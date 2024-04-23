@@ -1,5 +1,5 @@
 /*!
- * @gsap/react 2.1.0
+ * @gsap/react 2.1.1
  * https://gsap.com
  *
  * Copyright 2008-2024, GreenSock. All rights reserved.
@@ -8,7 +8,7 @@
  * @author: Jack Doyle, jack@greensock.com
 */
 /* eslint-disable */
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 
 let useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect,
@@ -27,24 +27,23 @@ export const useGSAP = (callback, dependencies = emptyArray) => {
     config = dependencies;
     dependencies = "dependencies" in config ? config.dependencies : emptyArray;
   }
-  let { scope, revertOnUpdate } = config,
-      [mounted, setMounted] = useState(false);
   (callback && typeof callback !== "function") && console.warn("First parameter must be a function or config object");
-  const context = _gsap.context(() => { }, scope),
-        contextSafe = (func) => context.add(null, func),
-        cleanup = () => context.revert(),
+  const { scope, revertOnUpdate } = config,
+        mounted = useRef(false),
+        context = useRef(_gsap.context(() => { }, scope)),
+        contextSafe = useRef((func) => context.current.add(null, func)),
         deferCleanup = dependencies && dependencies.length && !revertOnUpdate;
   useIsomorphicLayoutEffect(() => {
-    callback && context.add(callback, scope);
-    if (!deferCleanup || !mounted) { // React renders bottom-up, thus there could be hooks with dependencies that run BEFORE the component mounts, thus cleanup wouldn't occur since a hook with an empty dependency Array would only run once the component mounts.
-      return cleanup;
+    callback && context.current.add(callback, scope);
+    if (!deferCleanup || !mounted.current) { // React renders bottom-up, thus there could be hooks with dependencies that run BEFORE the component mounts, thus cleanup wouldn't occur since a hook with an empty dependency Array would only run once the component mounts.
+      return () => context.current.revert();
     }
   }, dependencies);
   deferCleanup && useIsomorphicLayoutEffect(() => {
-      setMounted(true);
-      return cleanup;
+      mounted.current = true;
+      return () => context.current.revert();
     }, emptyArray);
-  return { context, contextSafe };
+  return { context: context.current, contextSafe: contextSafe.current };
 };
 useGSAP.register = core => { _gsap = core; };
 useGSAP.headless = true; // doesn't require the window to be registered.
