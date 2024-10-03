@@ -31,3 +31,11 @@ interface useGSAPConfig {
  * @returns {useGSAPReturn} Object with "context" and "contextSafe" properties
 */
 export function useGSAP(func?: ContextFunc | useGSAPConfig, dependencies?: unknown[] | useGSAPConfig): useGSAPReturn;
+
+/**
+ * Flip animation hook for animating React components that encapsulates the GSAP Flip API.
+ * @param target - The target element to animate.
+ * @param options - The options for the flip animation.
+ * @returns {isFlipped: boolean, flip: () => void, scope: ReactRef} - An object containing the flip state, the flip function, and the scope of the animation.
+ */
+export function useFlip(target: gsap.DOMTarget, options: Flip.FlipStateVars & Flip.FromToVars & { revertOnUpdate?: boolean }): { isFlipped: boolean, flip: () => void, scope: ReactRef };
