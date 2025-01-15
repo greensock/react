@@ -30,6 +30,8 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
+gsap.registerPlugin(useGSAP); // register any plugins, including the useGSAP hook
+
 const container = useRef();
 useGSAP(() => {
     // gsap code here...
@@ -84,9 +86,14 @@ useGSAP(() => {
 npm install @gsap/react
 ```
 
+At the top of your code right below your imports, it's usually a good idea to register `useGSAP` as a plugin:
+```javascript
+gsap.registerPlugin(useGSAP);
+```
+
 ## Using callbacks or event listeners? Use `contextSafe()` and clean up!
 
-A function is considered "context-safe" if it is properly scoped to a <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a> so that any GSAP-related objects created **while that function executes** are recorded by that `Context` and use its `scope` for selector text. When that `Context` gets reverted (like when the hook gets torn down or re-synchronizes), so do all of those GSAP-related objects. Cleanup is important in React and `Context` makes it simple. Otherwise, you'd need to manually keep track of all your animations and `revert()` them when necessary, like when the entire component gets unmounted/remounted. `Context` does that work for you.
+A function is considered "context-safe" if it is properly scoped to a <a href="https://gsap.com/docs/v3/GSAP/gsap.context()">`gsap.context()`</a> so that any GSAP-related objects created **while that function executes** are recorded by that `Context` and use its `scope` for selector text. When that `Context` gets reverted (like when the hook gets torn down or re-synchronizes), so will all of those GSAP-related objects. Cleanup is important in React and `Context` makes it simple. Otherwise, you'd need to manually keep track of all your animations and `revert()` them when necessary, like when the entire component gets unmounted/remounted. `Context` does that work for you.
 
 The main `useGSAP(() => {...})` function is automatically context-safe of course. But if you're creating functions that get called **AFTER** the main `useGSAP()` function executes (like click event handlers, something in a `setTimeout()`, or anything delayed), you need a way to make those functions context-safe. Think of it like telling the `Context` when to hit the "record" button for any GSAP-related objects. 
 
@@ -208,4 +215,4 @@ Ask in the friendly <a href="https://gsap.com/community/">GSAP forums</a>. Or sh
 ### License
 GreenSock's standard "no charge" license can be viewed at <a href="https://gsap.com/standard-license">https://gsap.com/standard-license</a>. <a href="https://gsap.com/pricing/">Club GSAP</a> members are granted additional rights. See <a href="https://gsap.com/licensing/">https://gsap.com/licensing/</a> for details. Why doesn't GSAP use an MIT (or similar) open source license, and why is that a **good** thing? This article explains it all: <a href="https://gsap.com/why-license/" target="_blank">https://gsap.com/why-license/</a>
 
-Copyright (c) 2008-2024, GreenSock. All rights reserved. 
+Copyright (c) 2008-2025, GreenSock. All rights reserved. 
