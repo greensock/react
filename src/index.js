@@ -8,8 +8,9 @@
  * @author: Jack Doyle, jack@greensock.com
 */
 /* eslint-disable */
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import gsap from "gsap";
+import Flip from "gsap/Flip";
 
 let useIsomorphicLayoutEffect = typeof document !== "undefined" ? useLayoutEffect : useEffect,
     isConfig = value => value && !Array.isArray(value) && typeof(value) === "object",
@@ -47,3 +48,40 @@ export const useGSAP = (callback, dependencies = emptyArray) => {
 };
 useGSAP.register = core => { _gsap = core; };
 useGSAP.headless = true; // doesn't require the window to be registered.
+
+export const useFlip = (
+    target,
+    options
+) => {
+    const [isFlipped, setIsFlipped] = useState(false)
+    const flipStateRef = useRef(null)
+    const scopeRef = useRef(null)
+
+    const { props, simple, revertOnUpdate, ...vars } = options
+
+    const captureState = useCallback(() => {
+        const mergedVars = { props, simple, targets: target }
+        flipStateRef.current = Flip.getState(target, mergedVars)
+    }, [target, props, simple])
+
+    const flip = useCallback(() => {
+        captureState()
+        setIsFlipped((prev) => !prev)
+    }, [captureState])
+
+    useGSAP(
+        () => {
+            if (flipStateRef.current) {
+                Flip.from(flipStateRef.current, vars)
+                flipStateRef.current = null
+            }
+        },
+        {
+            scope: scopeRef,
+            dependencies: [isFlipped],
+            revertOnUpdate: revertOnUpdate,
+        }
+    )
+
+    return { isFlipped, flip, scopeRef }
+}
